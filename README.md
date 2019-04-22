@@ -1,2 +1,2 @@
 # study
-IT study
+technology learning
