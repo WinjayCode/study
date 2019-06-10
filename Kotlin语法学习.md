@@ -1084,3 +1084,1420 @@ open class Base(p: Int)           // 定义基类
 class Derived(p: Int) : Base(p)
 ```
 
+## 构造函数
+
+### 子类有主构造函数
+
+如果子类有主构造函数， 则基类必须在主构造函数中立即初始化。
+
+```kotlin
+open class Person(var name : String, var age : Int){// 基类
+
+}
+
+class Student(name : String, age : Int, var no : String, var score : Int) : Person(name, age) {
+
+}
+
+// 测试
+fun main(args: Array<String>) {
+    val s =  Student("Runoob", 18, "S12346", 89)
+    println("学生名： ${s.name}")
+    println("年龄： ${s.age}")
+    println("学生号： ${s.no}")
+    println("成绩： ${s.score}")
+}
+```
+
+### 子类没有主构造函数
+
+如果子类没有主构造函数，则必须在每一个二级构造函数中用 super 关键字初始化基类，或者在代理另一个构造函数。初始化基类时，可以调用基类的不同构造方法。
+
+```kotlin
+class Student : Person {
+
+    constructor(ctx: Context) : super(ctx) {
+    } 
+
+    constructor(ctx: Context, attrs: AttributeSet) : super(ctx,attrs) {
+    }
+}
+```
+
+## 重写
+
+在基类中，使用fun声明函数时，此函数默认为final修饰，不能被子类重写。如果允许子类重写该函数，那么就要手动添加 open 修饰它, 子类重写方法使用 override 关键词：
+
+```kotlin
+/**用户基类**/
+open class Person{
+    open fun study(){       // 允许子类重写
+        println("我毕业了")
+    }
+}
+
+/**子类继承 Person 类**/
+class Student : Person() {
+
+    override fun study(){    // 重写方法
+        println("我在读大学")
+    }
+}
+
+fun main(args: Array<String>) {
+    val s =  Student()
+    s.study();
+}
+```
+
+如果有多个相同的方法（继承或者实现自其他类，如A、B类），则必须要重写该方法，使用super范型去选择性地调用父类的实现。
+
+```kotlin
+open class A {
+    open fun f () { print("A") }
+    fun a() { print("a") }
+}
+
+interface B {
+    fun f() { print("B") } //接口的成员变量默认是 open 的
+    fun b() { print("b") }
+}
+
+class C() : A() , B{
+    override fun f() {
+        super<A>.f()//调用 A.f()
+        super<B>.f()//调用 B.f()
+    }
+}
+
+fun main(args: Array<String>) {
+    val c =  C()
+    c.f();
+
+}
+```
+
+C 继承自 a() 或 b(), C 不仅可以从 A 或则 B 中继承函数，而且 C 可以继承 A()、B() 中共有的函数。此时该函数在中只有一个实现，为了消除歧义，该函数必须调用A()和B()中该函数的实现，并提供自己的实现。
+
+## 属性重写
+
+属性重写使用 override 关键字，属性必须具有兼容类型，每一个声明的属性都可以通过初始化程序或者getter方法被重写：
+
+```kotlin
+open class Foo {
+    open val x: Int get { …… }
+}
+
+class Bar1 : Foo() {
+    override val x: Int = ……
+}
+```
+
+你可以用一个var属性重写一个val属性，但是反过来不行。因为val属性本身定义了getter方法，重写为var属性会在衍生类中额外声明一个setter方法
+
+你可以在主构造函数中使用 override 关键字作为属性声明的一部分:
+
+```kotlin
+interface Foo {
+    val count: Int
+}
+
+class Bar1(override val count: Int) : Foo
+
+class Bar2 : Foo {
+    override var count: Int = 0
+}
+```
+
+# Kotlin 接口
+
+Kotlin 接口与 Java 8 类似，使用 interface 关键字定义接口，允许方法有默认实现：
+
+```kotlin
+interface MyInterface {
+    fun bar()    // 未实现
+    fun foo() {  //已实现
+      // 可选的方法体
+      println("foo")
+    }
+}
+```
+
+### 实现接口
+
+一个类或者对象可以实现一个或多个接口。
+
+```kotlin
+class Child : MyInterface {
+    override fun bar() {
+        // 方法体
+    }
+}
+```
+
+### 接口中的属性
+
+接口中的属性只能是抽象的，不允许初始化值，接口不会保存属性值，实现接口时，必须重写属性：
+
+```kotlin
+interface MyInterface{
+    var name:String //name 属性, 抽象的
+}
+ 
+class MyImpl:MyInterface{
+    override var name: String = "runoob" //重写属性
+}
+```
+
+## 函数重写
+
+实现多个接口时，可能会遇到同一方法继承多个实现的问题。例如:
+
+```kotlin
+interface A {
+    fun foo() { print("A") }   // 已实现
+    fun bar()                  // 未实现，没有方法体，是抽象的
+}
+ 
+interface B {
+    fun foo() { print("B") }   // 已实现
+    fun bar() { print("bar") } // 已实现
+}
+ 
+class C : A {
+    override fun bar() { print("bar") }   // 重写
+}
+ 
+class D : A, B {
+    override fun foo() {
+        super<A>.foo()
+        super<B>.foo()
+    }
+ 
+    override fun bar() {
+        super<B>.bar()
+    }
+}
+ 
+fun main(args: Array<String>) {
+    val d =  D()
+    d.foo();
+    d.bar();
+}
+```
+
+输出结果为：
+
+```kotlin
+ABbar
+```
+
+实例中接口 A 和 B 都定义了方法 foo() 和 bar()， 两者都实现了 foo(), B 实现了 bar()。因为 C 是一个实现了 A 的具体类，所以必须要重写 bar() 并实现这个抽象方法。
+
+然而，如果我们从 A 和 B 派生 D，我们需要实现多个接口继承的所有方法，并指明 D 应该如何实现它们。这一规则 既适用于继承单个实现（bar()）的方法也适用于继承多个实现（foo()）的方法。
+
+# Kotlin 扩展
+
+Kotlin 可以对一个类的属性和方法进行扩展，且不需要继承或使用 Decorator 模式。
+
+扩展是一种静态行为，对被扩展的类代码本身不会造成任何影响。
+
+------
+
+## 扩展函数
+
+扩展函数可以在已有类中添加新的方法，不会对原类做修改，扩展函数定义形式：
+
+```kotlin
+fun receiverType.functionName(params){
+    body
+}
+```
+
+- receiverType：表示函数的接收者，也就是函数扩展的对象
+- functionName：扩展函数的名称
+- params：扩展函数的参数，可以为NULL
+
+以下实例扩展 User 类 ：
+
+```kotlin
+class User(var name:String)
+
+/**扩展函数**/
+fun User.Print(){
+    print("用户名 $name")
+}
+
+fun main(arg:Array<String>){
+    var user = User("Runoob")
+    user.Print()
+}
+```
+
+this关键字指代接收者对象(receiver object)(也就是调用扩展函数时, 在点号之前指定的对象实例)。
+
+## 扩展函数是静态解析的
+
+扩展函数是静态解析的，并不是接收者类型的虚拟成员，在调用扩展函数时，具体被调用的的是哪一个函数，由调用函数的的对象表达式来决定的，而不是动态的类型决定的:
+
+```kotlin
+open class C
+
+class D: C()
+
+fun C.foo() = "c"   // 扩展函数 foo
+
+fun D.foo() = "d"   // 扩展函数 foo
+
+fun printFoo(c: C) {
+    println(c.foo())  // 类型是 C 类
+}
+
+fun main(arg:Array<String>){
+    printFoo(D())
+}
+```
+
+实例执行输出结果为：
+
+```kotlin
+c
+```
+
+若扩展函数和成员函数一致，则使用该函数时，会优先使用成员函数。
+
+```kotlin
+class C {
+    fun foo() { println("成员函数") }
+}
+
+fun C.foo() { println("扩展函数") }
+
+fun main(arg:Array<String>){
+    var c = C()
+    c.foo()
+}
+```
+
+实例执行输出结果为：
+
+```kotlin
+成员函数
+```
+
+### 扩展一个空对象
+
+在扩展函数内， 可以通过 this 来判断接收者是否为 NULL,这样，即使接收者为 NULL,也可以调用扩展函数。例如:
+
+```kotlin
+fun Any?.toString(): String {
+    if (this == null) return "null"
+    // 空检测之后，“this”会自动转换为非空类型，所以下面的 toString()
+    // 解析为 Any 类的成员函数
+    return toString()
+}
+fun main(arg:Array<String>){
+    var t = null
+    println(t.toString())
+}
+```
+
+实例执行输出结果为：
+
+```kotlin
+null
+```
+
+------
+
+\>扩展属性
+
+除了函数，Kotlin 也支持属性对属性进行扩展:
+
+```kotlin
+val <T> List<T>.lastIndex: Int
+    get() = size - 1
+ 
+```
+
+扩展属性允许定义在类或者kotlin文件中，不允许定义在函数中。初始化属性因为属性没有后端字段（backing field），所以不允许被初始化，只能由显式提供的 getter/setter 定义。
+
+```kotlin
+val Foo.bar = 1 // 错误：扩展属性不能有初始化器
+```
+
+扩展属性只能被声明为 val。
+
+## 伴生对象的扩展
+
+如果一个类定义有一个伴生对象 ，你也可以为伴生对象定义扩展函数和属性。
+
+伴生对象通过"类名."形式调用伴生对象，伴生对象声明的扩展函数，通过用类名限定符来调用：
+
+```kotlin
+class MyClass {
+    companion object { }  // 将被称为 "Companion"
+}
+
+fun MyClass.Companion.foo() {
+    println("伴随对象的扩展函数")
+}
+
+val MyClass.Companion.no: Int
+    get() = 10
+
+fun main(args: Array<String>) {
+    println("no:${MyClass.no}")
+    MyClass.foo()
+}
+```
+
+## 扩展的作用域
+
+通常扩展函数或属性定义在顶级包下:
+
+```kotlin
+package foo.bar
+
+fun Baz.goo() { …… } 
+```
+
+要使用所定义包之外的一个扩展, 通过import导入扩展的函数名进行使用:
+
+```kotlin
+package com.example.usage
+
+import foo.bar.goo // 导入所有名为 goo 的扩展
+                   // 或者
+import foo.bar.*   // 从 foo.bar 导入一切
+
+fun usage(baz: Baz) {
+    baz.goo()
+}
+```
+
+## 扩展声明为成员
+
+在一个类内部你可以为另一个类声明扩展。
+
+在这个扩展中，有个多个隐含的接受者，其中扩展方法定义所在类的实例称为分发接受者，而扩展方法的目标类型的实例称为扩展接受者。
+
+```kotlin
+class D {
+    fun bar() { println("D bar") }
+}
+
+class C {
+    fun baz() { println("C baz") }
+
+    fun D.foo() {
+        bar()   // 调用 D.bar
+        baz()   // 调用 C.baz
+    }
+
+    fun caller(d: D) {
+        d.foo()   // 调用扩展函数
+    }
+}
+
+fun main(args: Array<String>) {
+    val c: C = C()
+    val d: D = D()
+    c.caller(d)
+
+}
+```
+
+实例执行输出结果为：
+
+```kotlin
+D bar
+C baz
+```
+
+在 C 类内，创建了 D 类的扩展。此时，C 被成为分发接受者，而 D 为扩展接受者。从上例中，可以清楚的看到，在扩展函数中，可以调用派发接收者的成员函数。
+
+假如在调用某一个函数，而该函数在分发接受者和扩展接受者均存在，则以扩展接收者优先，要引用分发接收者的成员你可以使用限定的 this 语法。
+
+```kotlin
+class D {
+    fun bar() { println("D bar") }
+}
+
+class C {
+    fun bar() { println("C bar") }  // 与 D 类 的 bar 同名
+
+    fun D.foo() {
+        bar()         // 调用 D.bar()，扩展接收者优先
+        this@C.bar()  // 调用 C.bar()
+    }
+
+    fun caller(d: D) {
+        d.foo()   // 调用扩展函数
+    }
+}
+
+fun main(args: Array<String>) {
+    val c: C = C()
+    val d: D = D()
+    c.caller(d)
+
+}
+```
+
+实例执行输出结果为：
+
+```kotlin
+D bar
+C bar
+```
+
+以成员的形式定义的扩展函数, 可以声明为 open , 而且可以在子类中覆盖. 也就是说, 在这类扩展函数的派 发过程中, 针对分发接受者是虚拟的(virtual), 但针对扩展接受者仍然是静态的。
+
+```kotlin
+open class D {
+}
+
+class D1 : D() {
+}
+
+open class C {
+    open fun D.foo() {
+        println("D.foo in C")
+    }
+
+    open fun D1.foo() {
+        println("D1.foo in C")
+    }
+
+    fun caller(d: D) {
+        d.foo()   // 调用扩展函数
+    }
+}
+
+class C1 : C() {
+    override fun D.foo() {
+        println("D.foo in C1")
+    }
+
+    override fun D1.foo() {
+        println("D1.foo in C1")
+    }
+}
+
+
+fun main(args: Array<String>) {
+    C().caller(D())   // 输出 "D.foo in C"
+    C1().caller(D())  // 输出 "D.foo in C1" —— 分发接收者虚拟解析
+    C().caller(D1())  // 输出 "D.foo in C" —— 扩展接收者静态解析
+
+}
+```
+
+实例执行输出结果为：
+
+```kotlin
+D.foo in C
+D.foo in C1
+D.foo in C
+```
+
+# Kotlin 数据类与密封类
+
+------
+
+## 数据类
+
+Kotlin 可以创建一个只包含数据的类，关键字为 **data**：
+
+```kotlin
+data class User(val name: String, val age: Int)
+```
+
+编译器会自动的从主构造函数中根据所有声明的属性提取以下函数：
+
+- `equals()` / `hashCode()`
+- `toString()` 格式如 `"User(name=John, age=42)"`
+- `componentN() functions` 对应于属性，按声明顺序排列
+- `copy()` 函数
+
+如果这些函数在类中已经被明确定义了，或者从超类中继承而来，就不再会生成。
+
+为了保证生成代码的一致性以及有意义，数据类需要满足以下条件：
+
+- 主构造函数至少包含一个参数。
+- 所有的主构造函数的参数必须标识为`val` 或者 `var` ;
+- 数据类不可以声明为 `abstract`, `open`, `sealed` 或者 `inner`;
+- 数据类不能继承其他类 (但是可以实现接口)。
+
+### 复制
+
+复制使用 copy() 函数，我们可以使用该函数复制对象并修改部分属性, 对于上文的 User 类，其实现会类似下面这样：
+
+```kotlin
+fun copy(name: String = this.name, age: Int = this.age) = User(name, age)
+```
+
+### 实例
+
+使用 copy 类复制 User 数据类，并修改 age 属性:
+
+```kotlin
+data class User(val name: String, val age: Int)
+
+
+fun main(args: Array<String>) {
+    val jack = User(name = "Jack", age = 1)
+    val olderJack = jack.copy(age = 2)
+    println(jack)
+    println(olderJack)
+
+}
+```
+
+输出结果为：
+
+```kotlin
+User(name=Jack, age=1)
+User(name=Jack, age=2)
+```
+
+### 数据类以及解构声明
+
+组件函数允许数据类在解构声明中使用：
+
+```kotlin
+val jane = User("Jane", 35)
+val (name, age) = jane
+println("$name, $age years of age") // prints "Jane, 35 years of age"
+```
+
+### 标准数据类
+
+标准库提供了 **Pair** 和 **Triple** 。在大多数情形中，命名数据类是更好的设计选择，因为这样代码可读性更强而且提供了有意义的名字和属性。
+
+## 密封类
+
+密封类用来表示受限的类继承结构：当一个值为有限几种的类型, 而不能有任何其他类型时。在某种意义上，他们是枚举类的扩展：枚举类型的值集合 也是受限的，但每个枚举常量只存在一个实例，而密封类 的一个子类可以有可包含状态的多个实例。
+
+声明一个密封类，使用 **sealed** 修饰类，密封类可以有子类，但是所有的子类都必须要内嵌在密封类中。
+
+sealed 不能修饰 interface ,abstract class(会报 warning,但是不会出现编译错误)
+
+```kotlin
+sealed class Expr
+data class Const(val number: Double) : Expr()
+data class Sum(val e1: Expr, val e2: Expr) : Expr()
+object NotANumber : Expr()
+
+fun eval(expr: Expr): Double = when (expr) {
+    is Const -> expr.number
+    is Sum -> eval(expr.e1) + eval(expr.e2)
+    NotANumber -> Double.NaN
+}
+```
+
+使用密封类的关键好处在于使用 when 表达式 的时候，如果能够 验证语句覆盖了所有情况，就不需要为该语句再添加一个 else 子句了。
+
+```kotlin
+fun eval(expr: Expr): Double = when(expr) {
+    is Expr.Const -> expr.number
+    is Expr.Sum -> eval(expr.e1) + eval(expr.e2)
+    Expr.NotANumber -> Double.NaN
+    // 不再需要 `else` 子句，因为我们已经覆盖了所有的情况
+}
+```
+
+# Kotlin 泛型
+
+泛型，即 "参数化类型"，将类型参数化，可以用在类，接口，方法上。
+
+与 Java 一样，Kotlin 也提供泛型，为类型安全提供保证，消除类型强转的烦恼。
+
+声明一个泛型类:
+
+```kotlin
+class Box<T>(t: T) {
+    var value = t
+}
+```
+
+创建类的实例时我们需要指定类型参数:
+
+```kotlin
+val box: Box<Int> = Box<Int>(1)
+// 或者
+val box = Box(1) // 编译器会进行类型推断，1 类型 Int，所以编译器知道我们说的是 Box<Int>。
+```
+
+定义泛型类型变量，可以完整地写明类型参数，如果编译器可以自动推定类型参数，也可以省略类型参数。
+
+Kotlin 泛型函数的声明与 Java 相同，类型参数要放在函数名的前面：
+
+```kotlin
+fun <T> boxIn(value: T) = Box(value)
+
+// 以下都是合法语句
+val box4 = boxIn<Int>(1)
+val box5 = boxIn(1)     // 编译器会进行类型推断
+```
+
+在调用泛型函数时，如果可以推断出类型参数，可以省略泛型参数。
+
+## 泛型约束
+
+我们可以使用泛型约束来设定一个给定参数允许使用的类型。
+
+Kotlin 中使用 : 对泛型的的类型上限进行约束。
+
+最常见的约束是上界(upper bound)：
+
+```kotlin
+fun <T : Comparable<T>> sort(list: List<T>) {
+    // ……
+}
+```
+
+Comparable 的子类型可以替代 T。 例如:
+
+```kotlin
+sort(listOf(1, 2, 3)) // OK。Int 是 Comparable<Int> 的子类型
+sort(listOf(HashMap<Int, String>())) // 错误：HashMap<Int, String> 不是 Comparable<HashMap<Int, String>> 的子类型
+```
+
+默认的上界是 Any?。
+
+对于多个上界约束条件，可以用 where 子句：
+
+```kotlin
+fun <T> copyWhenGreater(list: List<T>, threshold: T): List<String>
+    where T : CharSequence,
+          T : Comparable<T> {
+    return list.filter { it > threshold }.map { it.toString() }
+}
+```
+
+## 型变
+
+Kotlin 中没有通配符类型，它有两个其他的东西：声明处型变（declaration-site variance）与类型投影（type projections）。
+
+### 声明处型变
+
+声明处的类型变异使用协变注解修饰符：in、out，消费者 in, 生产者 out。
+
+使用 out 使得一个类型参数协变，协变类型参数只能用作输出，可以作为返回值类型但是无法作为入参的类型：
+
+```kotlin
+// 定义一个支持协变的类
+class Runoob<out A>(val a: A) {
+    fun foo(): A {
+        return a
+    }
+}
+
+fun main(args: Array<String>) {
+    var strCo: Runoob<String> = Runoob("a")
+    var anyCo: Runoob<Any> = Runoob<Any>("b")
+    anyCo = strCo
+    println(anyCo.foo())   // 输出 a
+}
+```
+
+in 使得一个类型参数逆变，逆变类型参数只能用作输入，可以作为入参的类型但是无法作为返回值的类型：
+
+```kotlin
+// 定义一个支持逆变的类
+class Runoob<in A>(a: A) {
+    fun foo(a: A) {
+    }
+}
+
+fun main(args: Array<String>) {
+    var strDCo = Runoob("a")
+    var anyDCo = Runoob<Any>("b")
+    strDCo = anyDCo
+}
+```
+
+## 星号投射
+
+有些时候, 你可能想表示你并不知道类型参数的任何信息, 但是仍然希望能够安全地使用它. 这里所谓"安全地使用"是指, 对泛型类型定义一个类型投射, 要求这个泛型类型的所有的实体实例, 都是这个投射的子类型。
+
+对于这个问题, Kotlin 提供了一种语法, 称为 星号投射(star-projection):
+
+- 假如类型定义为 Foo<out T> , 其中 T 是一个协变的类型参数, 上界(upper bound)为 TUpper ,Foo<*> 等价于 Foo<out TUpper> . 它表示, 当 T 未知时, 你可以安全地从 Foo<*> 中 读取TUpper 类型的值.
+- 假如类型定义为 Foo<in T> , 其中 T 是一个反向协变的类型参数, Foo<*> 等价于 Foo<inNothing> . 它表示, 当 T 未知时, 你不能安全地向 Foo<*> 写入 任何东西.
+- 假如类型定义为 Foo<T> , 其中 T 是一个协变的类型参数, 上界(upper bound)为 TUpper , 对于读取值的场合, Foo<*> 等价于 Foo<out TUpper> , 对于写入值的场合, 等价于 Foo<in Nothing> .
+
+如果一个泛型类型中存在多个类型参数, 那么每个类型参数都可以单独的投射. 比如, 如果类型定义为interface Function<in T, out U> , 那么可以出现以下几种星号投射:
+
+1. Function<*, String> , 代表 Function<in Nothing, String> ;
+2. Function<Int, *> , 代表 Function<Int, out Any?> ;
+3. Function<*,* > , 代表 Function<in Nothing, out Any?> .
+
+注意: 星号投射与 Java 的原生类型(raw type)非常类似, 但可以安全使用
+
+# Kotlin 枚举类
+
+枚举类最基本的用法是实现一个类型安全的枚举。
+
+枚举常量用逗号分隔,每个枚举常量都是一个对象。
+
+```kotlin
+enum class Color{
+    RED,BLACK,BLUE,GREEN,WHITE
+}
+```
+
+### 枚举初始化
+
+每一个枚举都是枚举类的实例，它们可以被初始化：
+
+```kotlin
+enum class Color(val rgb: Int) {
+    RED(0xFF0000),
+    GREEN(0x00FF00),
+    BLUE(0x0000FF)
+}
+```
+
+默认名称为枚举字符名，值从0开始。若需要指定值，则可以使用其构造函数：
+
+```kotlin
+enum class Shape(value:Int){
+    ovel(100),
+    rectangle(200)
+}
+```
+
+枚举还支持以声明自己的匿名类及相应的方法、以及覆盖基类的方法。如：
+
+```kotlin
+enum class ProtocolState {
+    WAITING {
+        override fun signal() = TALKING
+    },
+
+    TALKING {
+        override fun signal() = WAITING
+    };
+
+    abstract fun signal(): ProtocolState
+}
+```
+
+如果枚举类定义任何成员，要使用分号将成员定义中的枚举常量定义分隔开
+
+## 使用枚举常量
+
+Kotlin 中的枚举类具有合成方法，允许遍历定义的枚举常量，并通过其名称获取枚举常数。
+
+```kotlin
+EnumClass.valueOf(value: String): EnumClass  // 转换指定 name 为枚举值，若未匹配成功，会抛出IllegalArgumentException
+EnumClass.values(): Array<EnumClass>        // 以数组的形式，返回枚举值
+```
+
+获取枚举相关信息：
+
+```kotlin
+val name: String //获取枚举名称
+val ordinal: Int //获取枚举值在所有枚举数组中定义的顺序
+```
+
+### 实例
+
+```kotlin
+enum class Color{
+    RED,BLACK,BLUE,GREEN,WHITE
+}
+
+fun main(args: Array<String>) {
+    var color:Color=Color.BLUE
+
+    println(Color.values())
+    println(Color.valueOf("RED"))
+    println(color.name)
+    println(color.ordinal)
+
+}
+```
+
+自 Kotlin 1.1 起，可以使用 `enumValues<T>()` 和 `enumValueOf<T>()` 函数以泛型的方式访问枚举类中的常量 ：
+
+```kotlin
+enum class RGB { RED, GREEN, BLUE }
+
+inline fun <reified T : Enum<T>> printAllValues() {
+    print(enumValues<T>().joinToString { it.name })
+}
+
+
+
+fun main(args: Array<String>) {
+    printAllValues<RGB>() // 输出 RED, GREEN, BLUE
+}
+```
+
+# Kotlin 对象表达式和对象声明
+
+Kotlin 用对象表达式和对象声明来实现创建一个对某个类做了轻微改动的类的对象，且不需要去声明一个新的子类。
+
+------
+
+## 对象表达式
+
+通过对象表达式实现一个匿名内部类的对象用于方法的参数中：
+
+```kotlin
+window.addMouseListener(object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+        // ...
+    }
+    override fun mouseEntered(e: MouseEvent) {
+        // ...
+    }
+})
+```
+
+对象可以继承于某个基类，或者实现其他接口:
+
+```kotlin
+open class A(x: Int) {
+    public open val y: Int = x
+}
+
+interface B {……}
+
+val ab: A = object : A(1), B {
+    override val y = 15
+}
+```
+
+如果超类型有一个构造函数，则必须传递参数给它。多个超类型和接口可以用逗号分隔。
+
+通过对象表达式可以越过类的定义直接得到一个对象：
+
+```kotlin
+fun main(args: Array<String>) {
+    val site = object {
+        var name: String = "菜鸟教程"
+        var url: String = "www.runoob.com"
+    }
+    println(site.name)
+    println(site.url)
+}
+```
+
+请注意，匿名对象可以用作只在本地和私有作用域中声明的类型。如果你使用匿名对象作为公有函数的 返回类型或者用作公有属性的类型，那么该函数或属性的实际类型 会是匿名对象声明的超类型，如果你没有声明任何超类型，就会是 Any。在匿名对象 中添加的成员将无法访问。
+
+```kotlin
+class C {
+    // 私有函数，所以其返回类型是匿名对象类型
+    private fun foo() = object {
+        val x: String = "x"
+    }
+
+    // 公有函数，所以其返回类型是 Any
+    fun publicFoo() = object {
+        val x: String = "x"
+    }
+
+    fun bar() {
+        val x1 = foo().x        // 没问题
+        val x2 = publicFoo().x  // 错误：未能解析的引用“x”
+    }
+}
+```
+
+在对象表达中可以方便的访问到作用域中的其他变量:
+
+```kotlin
+fun countClicks(window: JComponent) {
+    var clickCount = 0
+    var enterCount = 0
+
+    window.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+            clickCount++
+        }
+
+        override fun mouseEntered(e: MouseEvent) {
+            enterCount++
+        }
+    })
+    // ……
+}
+```
+
+## 对象声明
+
+Kotlin 使用 object 关键字来声明一个对象。
+
+Kotlin 中我们可以方便的通过对象声明来获得一个单例。
+
+```kotlin
+object DataProviderManager {
+    fun registerDataProvider(provider: DataProvider) {
+        // ……
+    }
+
+    val allDataProviders: Collection<DataProvider>
+        get() = // ……
+}
+```
+
+引用该对象，我们直接使用其名称即可：
+
+```kotlin
+DataProviderManager.registerDataProvider(……)
+```
+
+当然你也可以定义一个变量来获取获取这个对象，当时当你定义两个不同的变量来获取这个对象时，你会发现你并不能得到两个不同的变量。也就是说通过这种方式，我们获得一个单例。
+
+```kotlin
+var data1 = DataProviderManager
+var data2 = DataProviderManager
+data1.name = "test"
+print("data1 name = ${data2.name}")  
+```
+
+对象可以有超类型：
+
+```kotlin
+object DefaultListener : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+        // ……
+    }
+
+    override fun mouseEntered(e: MouseEvent) {
+        // ……
+    }
+}
+```
+
+与对象表达式不同，当对象声明在另一个类的内部时，这个对象并不能通过外部类的实例访问到该对象，而只能通过类名来访问，同样该对象也不能直接访问到外部类的方法和变量。
+
+```kotlin
+class Site {
+    var name = "菜鸟教程"
+    object DeskTop{
+        var url = "www.runoob.com"
+        fun showName(){
+            print{"desk legs $name"} // 错误，不能访问到外部类的方法和变量
+        }
+    }
+}
+fun main(args: Array<String>) {
+    var site = Site()
+    site.DeskTop.url // 错误，不能通过外部类的实例访问到该对象
+    Site.DeskTop.url // 正确
+}
+```
+
+## 伴生对象
+
+类内部的对象声明可以用 companion 关键字标记，这样它就与外部类关联在一起，我们就可以直接通过外部类访问到对象的内部元素。
+
+```kotlin
+class MyClass {
+    companion object Factory {
+        fun create(): MyClass = MyClass()
+    }
+}
+
+val instance = MyClass.create()   // 访问到对象的内部元素
+```
+
+我们可以省略掉该对象的对象名，然后使用 Companion 替代需要声明的对象名：
+
+```kotlin
+class MyClass {
+    companion object {
+    }
+}
+
+val x = MyClass.Companion
+```
+
+**注意：**一个类里面只能声明一个内部关联对象，即关键字 companion 只能使用一次。
+
+请伴生对象的成员看起来像其他语言的静态成员，但在运行时他们仍然是真实对象的实例成员。例如还可以实现接口：
+
+```kotlin
+interface Factory<T> {
+    fun create(): T
+}
+
+
+class MyClass {
+    companion object : Factory<MyClass> {
+        override fun create(): MyClass = MyClass()
+    }
+}
+```
+
+## 对象表达式和对象声明之间的语义差异
+
+对象表达式和对象声明之间有一个重要的语义差别：
+
+- 对象表达式是在使用他们的地方立即执行的
+- 对象声明是在第一次被访问到时延迟初始化的
+- 伴生对象的初始化是在相应的类被加载（解析）时，与 Java 静态初始化器的语义相匹配
+
+# kotlin 委托
+
+[委托模式](https://www.runoob.com/w3cnote/delegate-mode.html)是软件设计模式中的一项基本技巧。在委托模式中，有两个对象参与处理同一个请求，接受请求的对象将请求委托给另一个对象来处理。
+
+Kotlin 直接支持委托模式，更加优雅，简洁。Kotlin 通过关键字 by 实现委托。
+
+## 类委托
+
+类的委托即一个类中定义的方法实际是调用另一个类的对象的方法来实现的。
+
+以下实例中派生类 Derived 继承了接口 Base 所有方法，并且委托一个传入的 Base 类的对象来执行这些方法。
+
+```kotlin
+// 创建接口
+interface Base {   
+    fun print()
+}
+
+// 实现此接口的被委托的类
+class BaseImpl(val x: Int) : Base {
+    override fun print() { print(x) }
+}
+
+// 通过关键字 by 建立委托类
+class Derived(b: Base) : Base by b
+
+fun main(args: Array<String>) {
+    val b = BaseImpl(10)
+    Derived(b).print() // 输出 10
+}
+```
+
+在 Derived 声明中，by 子句表示，将 b 保存在 Derived 的对象实例内部，而且编译器将会生成继承自 Base 接口的所有方法, 并将调用转发给 b。
+
+## 属性委托
+
+属性委托指的是一个类的某个属性值不是在类中直接进行定义，而是将其托付给一个代理类，从而实现对该类的属性统一管理。
+
+属性委托语法格式：
+
+```kotlin
+val/var <属性名>: <类型> by <表达式>
+```
+
+- var/val：属性类型(可变/只读)
+- 属性名：属性名称
+- 类型：属性的数据类型
+- 表达式：委托代理类
+
+by 关键字之后的表达式就是委托, 属性的 get() 方法(以及set() 方法)将被委托给这个对象的 getValue() 和 setValue() 方法。属性委托不必实现任何接口, 但必须提供 getValue() 函数(对于 var属性,还需要 setValue() 函数)。
+
+### 定义一个被委托的类
+
+该类需要包含 getValue() 方法和 setValue() 方法，且参数 thisRef 为进行委托的类的对象，prop 为进行委托的属性的对象。
+
+```kotlin
+import kotlin.reflect.KProperty
+// 定义包含属性委托的类
+class Example {
+    var p: String by Delegate()
+}
+
+// 委托的类
+class Delegate {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
+        return "$thisRef, 这里委托了 ${property.name} 属性"
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
+        println("$thisRef 的 ${property.name} 属性赋值为 $value")
+    }
+}
+fun main(args: Array<String>) {
+    val e = Example()
+    println(e.p)     // 访问该属性，调用 getValue() 函数
+
+    e.p = "Runoob"   // 调用 setValue() 函数
+    println(e.p)
+}
+```
+
+输出结果为：
+
+```kotlin
+Example@433c675d, 这里委托了 p 属性
+Example@433c675d 的 p 属性赋值为 Runoob
+Example@433c675d, 这里委托了 p 属性
+```
+
+## 标准委托
+
+Kotlin 的标准库中已经内置了很多工厂方法来实现属性的委托。
+
+### 延迟属性 Lazy
+
+lazy() 是一个函数, 接受一个 Lambda 表达式作为参数, 返回一个 Lazy <T> 实例的函数，返回的实例可以作为实现延迟属性的委托： 第一次调用 get() 会执行已传递给 lazy() 的 lamda 表达式并记录结果， 后续调用 get() 只是返回记录的结果。
+
+```kotlin
+val lazyValue: String by lazy {
+    println("computed!")     // 第一次调用输出，第二次调用不执行
+    "Hello"
+}
+
+fun main(args: Array<String>) {
+    println(lazyValue)   // 第一次执行，执行两次输出表达式
+    println(lazyValue)   // 第二次执行，只输出返回值
+}
+```
+
+执行输出结果：
+
+```kotlin
+computed!
+Hello
+Hello
+```
+
+## 可观察属性 Observable
+
+observable 可以用于实现观察者模式。
+
+Delegates.observable() 函数接受两个参数: 第一个是初始化值, 第二个是属性值变化事件的响应器(handler)。
+
+在属性赋值后会执行事件的响应器(handler)，它有三个参数：被赋值的属性、旧值和新值：
+
+```kotlin
+import kotlin.properties.Delegates
+
+class User {
+    var name: String by Delegates.observable("初始值") {
+        prop, old, new ->
+        println("旧值：$old -> 新值：$new")
+    }
+}
+
+fun main(args: Array<String>) {
+    val user = User()
+    user.name = "第一次赋值"
+    user.name = "第二次赋值"
+}
+```
+
+执行输出结果：
+
+```kotlin
+旧值：初始值 -> 新值：第一次赋值
+旧值：第一次赋值 -> 新值：第二次赋值
+```
+
+## 把属性储存在映射中
+
+一个常见的用例是在一个映射（map）里存储属性的值。 这经常出现在像解析 JSON 或者做其他"动态"事情的应用中。 在这种情况下，你可以使用映射实例自身作为委托来实现委托属性。
+
+```kotlin
+class Site(val map: Map<String, Any?>) {
+    val name: String by map
+    val url: String  by map
+}
+
+fun main(args: Array<String>) {
+    // 构造函数接受一个映射参数
+    val site = Site(mapOf(
+        "name" to "菜鸟教程",
+        "url"  to "www.runoob.com"
+    ))
+    
+    // 读取映射值
+    println(site.name)
+    println(site.url)
+}
+```
+
+执行输出结果：
+
+```kotlin
+菜鸟教程
+www.runoob.com
+```
+
+如果使用 var 属性，需要把 Map 换成 MutableMap：
+
+```kotlin
+class Site(val map: MutableMap<String, Any?>) {
+    val name: String by map
+    val url: String by map
+}
+
+fun main(args: Array<String>) {
+
+    var map:MutableMap<String, Any?> = mutableMapOf(
+            "name" to "菜鸟教程",
+            "url" to "www.runoob.com"
+    )
+
+    val site = Site(map)
+
+    println(site.name)
+    println(site.url)
+
+    println("--------------")
+    map.put("name", "Google")
+    map.put("url", "www.google.com")
+
+    println(site.name)
+    println(site.url)
+
+}
+```
+
+执行输出结果：
+
+```kotlin
+菜鸟教程
+www.runoob.com
+--------------
+Google
+www.google.com
+```
+
+## Not Null
+
+notNull 适用于那些无法在初始化阶段就确定属性值的场合。
+
+```kotlin
+class Foo {
+    var notNullBar: String by Delegates.notNull<String>()
+}
+
+foo.notNullBar = "bar"
+println(foo.notNullBar)
+```
+
+需要注意，如果属性在赋值前就被访问的话则会抛出异常。
+
+## 局部委托属性
+
+你可以将局部变量声明为委托属性。 例如，你可以使一个局部变量惰性初始化：
+
+```kotlin
+fun example(computeFoo: () -> Foo) {
+    val memoizedFoo by lazy(computeFoo)
+
+    if (someCondition && memoizedFoo.isValid()) {
+        memoizedFoo.doSomething()
+    }
+}
+```
+
+memoizedFoo 变量只会在第一次访问时计算。 如果 someCondition 失败，那么该变量根本不会计算。
+
+## 属性委托要求
+
+对于只读属性(也就是说val属性), 它的委托必须提供一个名为getValue()的函数。该函数接受以下参数：
+
+- thisRef —— 必须与属性所有者类型（对于扩展属性——指被扩展的类型）相同或者是它的超类型
+- property —— 必须是类型 KProperty<*> 或其超类型
+
+这个函数必须返回与属性相同的类型（或其子类型）。
+
+对于一个值可变(mutable)属性(也就是说,var 属性),除 getValue()函数之外,它的委托还必须 另外再提供一个名为setValue()的函数, 这个函数接受以下参数:
+
+- property —— 必须是类型 KProperty<*> 或其超类型
+- new value —— 必须和属性同类型或者是它的超类型。
+
+## 翻译规则
+
+在每个委托属性的实现的背后，Kotlin 编译器都会生成辅助属性并委托给它。 例如，对于属性 prop，生成隐藏属性 prop$delegate，而访问器的代码只是简单地委托给这个附加属性：
+
+```kotlin
+class C {
+    var prop: Type by MyDelegate()
+}
+
+// 这段是由编译器生成的相应代码：
+class C {
+    private val prop$delegate = MyDelegate()
+    var prop: Type
+        get() = prop$delegate.getValue(this, this::prop)
+        set(value: Type) = prop$delegate.setValue(this, this::prop, value)
+}
+```
+
+Kotlin 编译器在参数中提供了关于 prop 的所有必要信息：第一个参数 this 引用到外部类 C 的实例而 this::prop 是 KProperty 类型的反射对象，该对象描述 prop 自身。
+
+## 提供委托
+
+通过定义 provideDelegate 操作符，可以扩展创建属性实现所委托对象的逻辑。 如果 by 右侧所使用的对象将 provideDelegate 定义为成员或扩展函数，那么会调用该函数来 创建属性委托实例。
+
+provideDelegate 的一个可能的使用场景是在创建属性时（而不仅在其 getter 或 setter 中）检查属性一致性。
+
+例如，如果要在绑定之前检查属性名称，可以这样写：
+
+```kotlin
+class ResourceLoader<T>(id: ResourceID<T>) {
+    operator fun provideDelegate(
+            thisRef: MyUI,
+            prop: KProperty<*>
+    ): ReadOnlyProperty<MyUI, T> {
+        checkProperty(thisRef, prop.name)
+        // 创建委托
+    }
+
+    private fun checkProperty(thisRef: MyUI, name: String) { …… }
+}
+
+fun <T> bindResource(id: ResourceID<T>): ResourceLoader<T> { …… }
+
+class MyUI {
+    val image by bindResource(ResourceID.image_id)
+    val text by bindResource(ResourceID.text_id)
+}
+```
+
+provideDelegate 的参数与 getValue 相同：
+
+- thisRef —— 必须与 属性所有者 类型（对于扩展属性——指被扩展的类型）相同或者是它的超类型
+- property —— 必须是类型 KProperty<*> 或其超类型。
+
+在创建 MyUI 实例期间，为每个属性调用 provideDelegate 方法，并立即执行必要的验证。
+
+如果没有这种拦截属性与其委托之间的绑定的能力，为了实现相同的功能， 你必须显式传递属性名，这不是很方便：
+
+```kotlin
+// 检查属性名称而不使用“provideDelegate”功能
+class MyUI {
+    val image by bindResource(ResourceID.image_id, "image")
+    val text by bindResource(ResourceID.text_id, "text")
+}
+
+fun <T> MyUI.bindResource(
+        id: ResourceID<T>,
+        propertyName: String
+): ReadOnlyProperty<MyUI, T> {
+   checkProperty(this, propertyName)
+   // 创建委托
+}
+```
+
+在生成的代码中，会调用 provideDelegate 方法来初始化辅助的 prop$delegate 属性。 比较对于属性声明 val prop: Type by MyDelegate() 生成的代码与 上面（当 provideDelegate 方法不存在时）生成的代码：
+
+```kotlin
+class C {
+    var prop: Type by MyDelegate()
+}
+
+// 这段代码是当“provideDelegate”功能可用时
+// 由编译器生成的代码：
+class C {
+    // 调用“provideDelegate”来创建额外的“delegate”属性
+    private val prop$delegate = MyDelegate().provideDelegate(this, this::prop)
+    val prop: Type
+        get() = prop$delegate.getValue(this, this::prop)
+}
+```
+
+请注意，provideDelegate 方法只影响辅助属性的创建，并不会影响为 getter 或 setter 生成的代码。
+
